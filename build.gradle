@@ -1,0 +1,70 @@
+// Apply the java plugin to add support for Java
+apply plugin: 'java'
+apply plugin: 'war'
+apply plugin: 'eclipse-wtp'
+apply from: "$rootDir/gradle/eclipse.gradle"
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+// Use changing=true for all SNAPSHOT libraries
+configurations.all {
+    // check for updates every build for artifacts with 'changing: true' 
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+
+ext {
+	// security_spring project
+	platformSecurityGroup = 'com.accelrys.platform.security'
+	platformSecurityProject = 'platform-security-spring'
+	platformSecurityVersion = '1.0-SNAPSHOT' 
+	
+	// spring framework versions
+	springSecurityVersion = '3.2.3.RELEASE'
+	springVersion = '3.2.8.RELEASE'
+}
+
+repositories {
+	maven { url "http://repo.maven.apache.org/maven2" }
+	mavenLocal()
+	maven { url "http://cm-chardonnay.accelrys.net:8081/nexus/content/repositories/public/" }
+}
+
+dependencies {
+	// servlet api
+	providedCompile 'javax.servlet:javax.servlet-api:3.0.1'
+	
+	// tomcat lib for JSPs
+	providedCompile 'org.apache.tomcat:tomcat-catalina-ha:7.0.53'
+	
+	// spring-security
+	compile "org.springframework.security:spring-security-web:${springSecurityVersion}"
+	compile "org.springframework.security:spring-security-config:${springSecurityVersion}"
+	
+	// JSTL support
+	runtime 'javax.servlet:jstl:1.2'
+	providedCompile 'javax.servlet:jsp-api:2.0'
+	
+	// logging
+	runtime 'log4j:log4j:1.2.17'
+	runtime 'org.slf4j:slf4j-log4j12:1.7.5'
+	runtime 'org.slf4j:jul-to-slf4j:1.7.5'
+	runtime 'org.slf4j:jcl-over-slf4j:1.7.5'
+}
+
+eclipse {
+	project {
+		natures 'org.springframework.ide.eclipse.core.springnature'
+	}
+    wtp {
+		component {
+			contextPath = 'appmanager'
+		}
+        facet {
+            facet name: 'java', version: '1.7'
+            facet name: 'jst.web', version: '3.0'
+            facet name: 'wst.jsdt.web', version: '1.0'
+        }
+    }
+}
+

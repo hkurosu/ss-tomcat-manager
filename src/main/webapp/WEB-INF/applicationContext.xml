@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:sec="http://www.springframework.org/schema/security"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.2.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd">
+
+	<!--
+	  * Set parameters to control security annotations support:
+	  * jsr250-annotations: enable JSR-250 annotation - @RolesAllowed(), @PermitAll(), @DenyAll()
+	  * pre-post-annotations: enable spring security annotation - @PreFilter, @PreAuthorize, @PostFilter, @PostAuthorize
+	  *
+	 -->
+	<sec:global-method-security 
+		jsr250-annotations="enabled"
+		pre-post-annotations="enabled"
+		authentication-manager-ref="authenticationManager"/>
+
+	<!-- 
+	  * Important parameters:
+	  *
+	  * create-session: Controls the eagerness with which an HTTP session is created by Spring Security classes.
+	  *                 (always, ifRequired, never, stateless)
+	  *
+	  *  servlet-api-provision: Provides versions of HttpServletRequest security methods such as isUserInRole() and getPrincipal() 
+	  *                        which are implemented by adding a SecurityContextHolderAwareRequestFilter bean to the stack. 
+	  *                        Defaults to true.
+	  *
+	  * entry-point-ref: choose the behavior of authentication. e.g. login form, 401 status, 403 status...
+	  *
+	  * access-decision-manager-ref: choose the behavior of authorization such as rule based (access attributes).
+	  *
+	  * custom-filter: places AEP security filter in filter chains
+	 -->
+	<sec:http
+		servlet-api-provision="true"
+		entry-point-ref="authenticationEntryPoint"
+	>
+		<sec:intercept-url pattern="/html**" access="ROLE_manager-gui" />
+		<sec:intercept-url pattern="/text/**" access="ROLE_manger-script" />
+		<sec:intercept-url pattern="/jmxproxy/**" access="ROLE_manager-jmx" />
+		<sec:intercept-url pattern="/status/**)" access="ROLE_manager-gui,ROLE_manager-script,ROLE_manager-jmx,ROLE_manager-status" />
+		
+		<sec:http-basic	/>
+
+	</sec:http>
+
+	<!--  
+	 * returns 401 status w/ WWW-Authenticate response header.
+	 * use "DiegestAuthenticationEntryPoint" for Digest authentication.
+	 * use "Http403ForbiddenEntryPoint" to return 403 status
+	 * there is a spring-security extension for Kerberos?
+	-->
+	<bean id="authenticationEntryPoint"	class="org.springframework.security.web.authentication.www.BasicAuthenticationEntryPoint"
+		p:realmName="Set Your RealmName!" />
+		
+	<sec:authentication-manager alias="authenticationManager">
+		<sec:authentication-provider>
+			<sec:user-service>
+				<sec:user name="scitegicadmin" 
+					authorities="ROLE_manager-gui,ROLE_manager-script,ROLE_manager-jmx,ROLE_manager-status"
+					password="scitegic" />
+			</sec:user-service>
+		</sec:authentication-provider>
+	</sec:authentication-manager>
+
+
+
+</beans>

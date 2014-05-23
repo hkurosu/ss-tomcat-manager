@@ -1,0 +1,35 @@
+apply plugin: 'eclipse'
+
+eclipse {
+	classpath {
+		defaultOutputDir = file('build/classes/main')
+		containers 'org.springsource.ide.eclipse.gradle.classpathcontainer'
+		// doesn't seem possible to specify different build output paths for different source files via plugin
+		// so we'll just rewrite the .classpath XML directly
+		// looking for XML like:
+		// 	<classpathentry kind="src" path="src/integration/java"/>
+		// and change it to:
+		// 	<classpathentry kind="src" output="build/classes/integration" path="src/integration/java"/>
+		// also seems to stop the Web Deployment Assembly from adding these to the WAR file
+		file {
+			withXml {
+				def root = it.asNode()
+				[
+					'main',
+					'test',
+					'integration'
+				].each { sourceSet ->
+					['java', 'resources'].each {
+						if (sourceSet == 'main' && it == 'java' ) { // main source build dir is already specified with defaultOutputDir
+							return
+						}
+						def path = "src/${sourceSet}/${it}"
+						def subdir = it == 'resources' ? 'resources' : 'classes'
+						def output = "build/${subdir}/${sourceSet}"
+						root.find{ it.@kind == 'src' && it.@path == path }?.@output = output
+					}
+				}
+			}
+		}
+	}
+}
